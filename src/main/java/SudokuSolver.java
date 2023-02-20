@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SudokuSolver {
@@ -42,13 +44,13 @@ public class SudokuSolver {
         while (insertEasyNumbers()) {
             // do nothing
         }
-        int[][] solution = tryToSolveRecursively(0);
+        var solution = tryToSolveRecursively(0);
         if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
         return solution;
     }
 
     private boolean insertEasyNumbers() {
-        boolean changesMade = false;
+        var changesMade = false;
         for (var p = 0; p < 81; p++) {
             var row = p / 9;
             var column = p % 9;
@@ -92,9 +94,11 @@ public class SudokuSolver {
 
     private int[][] tryToSolveRecursively(int p) {
         if (p == 81) {
-            return Arrays.stream(grid)
-                    .map(a -> Arrays.copyOf(a, a.length))
-                    .toArray(int[][]::new);
+            var solution = new int[9][9];
+            for (var i = 0; i < 9; i++) {
+                System.arraycopy(grid[i], 0, solution[i], 0, 9);
+            }
+            return solution;
         }
         var row = p / 9;
         var column = p % 9;
