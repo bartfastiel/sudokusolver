@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.copyOf;
@@ -24,16 +25,13 @@ public class SudokuSolver {
         if (numbersGiven < 17)
             throw new IllegalArgumentException("With " + numbersGiven + " numbers (less then 17), there are definitely several solutions");
         this.grid = new int[NUMBER_OF_FIELDS];
-        var guessFieldsList = new ArrayList<Integer>(NUMBER_OF_FIELDS);
-        for (var p = 0; p < SIDE_LENGTH * SIDE_LENGTH; p++) {
+        for (var p = 0; p < NUMBER_OF_FIELDS; p++) {
             var row = p / SIDE_LENGTH;
             var column = p % SIDE_LENGTH;
             var block = (row / 3) * 3 + column / 3;
             var v = grid[row][column];
             this.grid[p] = v;
-            if (v == 0) {
-                guessFieldsList.add(p);
-            } else {
+            if (v != 0) {
                 var bitMask = 1 << v;
                 if ((usedNumbersPerRow[row] & bitMask) != 0)
                     throw new IllegalArgumentException(v + " twice in row " + row);
@@ -46,7 +44,18 @@ public class SudokuSolver {
                 usedNumbersPerBlock[block] |= bitMask;
             }
         }
-        guessFields = guessFieldsList.stream().mapToInt(i -> i).toArray();
+        record GuessField(int p, byte choices) {
+        }
+        var guessFieldsList = new ArrayList<GuessField>(NUMBER_OF_FIELDS);
+        for (var p = 0; p < NUMBER_OF_FIELDS; p++) {
+            var row = p / SIDE_LENGTH;
+            var column = p % SIDE_LENGTH;
+            var block = (row / 3) * 3 + column / 3;
+            if (this.grid[p] == 0) {
+                guessFieldsList.add(new GuessField(p, (byte) Integer.bitCount(~(usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]))));
+            }
+        }
+        guessFields = guessFieldsList.stream().sorted(Comparator.comparing(GuessField::choices)).mapToInt(GuessField::p).toArray();
     }
 
     public int[][] solve() {
@@ -98,7 +107,7 @@ public class SudokuSolver {
 
     private int[][] to2D(int[] solution) {
         var result = new int[SIDE_LENGTH][SIDE_LENGTH];
-        for (var p = 0; p < SIDE_LENGTH * SIDE_LENGTH; p++) {
+        for (var p = 0; p < NUMBER_OF_FIELDS; p++) {
             var row = p / SIDE_LENGTH;
             var column = p % SIDE_LENGTH;
             result[row][column] = solution[p];
