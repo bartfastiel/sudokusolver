@@ -1,32 +1,36 @@
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class SudokuSolver {
+import static java.util.Arrays.copyOf;
 
-    private final int[][] grid;
-    private final boolean[][] guess = new boolean[9][9];
-    private final boolean[][] usedNumbersPerRow = new boolean[9][9];
-    private final boolean[][] usedNumbersPerColumn = new boolean[9][9];
-    private final boolean[][] usedNumbersPerBlock = new boolean[9][9];
+public class SudokuSolver {
+    private static final int SIDE_LENGTH = 9;
+    private static final int NUMBER_OF_FIELDS = SIDE_LENGTH * SIDE_LENGTH;
+    private final int[] grid;
+    private final boolean[] guess = new boolean[NUMBER_OF_FIELDS];
+    private final boolean[][] usedNumbersPerRow = new boolean[SIDE_LENGTH][SIDE_LENGTH];
+    private final boolean[][] usedNumbersPerColumn = new boolean[SIDE_LENGTH][SIDE_LENGTH];
+    private final boolean[][] usedNumbersPerBlock = new boolean[SIDE_LENGTH][SIDE_LENGTH];
 
     public SudokuSolver(int[][] grid) {
-        this.grid = grid;
-        if (grid.length != 9)
-            throw new IllegalArgumentException("Sudoku has to have 9 rows but had " + grid.length + " rows");
-        if (Arrays.stream(grid).anyMatch(row -> row.length != 9))
-            throw new IllegalArgumentException("Each row has to have 9 cells");
+        if (grid.length != SIDE_LENGTH)
+            throw new IllegalArgumentException("Sudoku has to have " + SIDE_LENGTH + " rows but had " + grid.length + " rows");
+        if (Arrays.stream(grid).anyMatch(row -> row.length != SIDE_LENGTH))
+            throw new IllegalArgumentException("Each row has to have "+SIDE_LENGTH +" cells");
         if (Arrays.stream(grid).flatMapToInt(Arrays::stream).anyMatch(cell -> cell < 0 || 9 < cell))
-            throw new IllegalArgumentException("Only numbers [0,9] are valid inputs");
+            throw new IllegalArgumentException("Only numbers [0," + SIDE_LENGTH + "] are valid inputs");
         var numbersGiven = Arrays.stream(grid).flatMapToInt(Arrays::stream).filter(c -> c != 0).count();
         if (numbersGiven < 17)
             throw new IllegalArgumentException("With " + numbersGiven + " numbers (less then 17), there are definitely several solutions");
-        for (var p = 0; p < 81; p++) {
-            var row = p / 9;
-            var column = p % 9;
+        this.grid = new int[SIDE_LENGTH * SIDE_LENGTH];
+        for (var p = 0; p < SIDE_LENGTH * SIDE_LENGTH; p++) {
+            var row = p / SIDE_LENGTH;
+            var column = p % SIDE_LENGTH;
             var block = (row / 3) * 3 + column / 3;
             var v = grid[row][column];
+            this.grid[p] = v;
             if (v == 0) {
-                guess[row][column] = true;
+                guess[p] = true;
             } else {
                 if (usedNumbersPerRow[row][v - 1])
                     throw new IllegalArgumentException(v + " twice in row " + row);
@@ -42,36 +46,26 @@ public class SudokuSolver {
     }
 
     public int[][] solve() {
-        var solution = tryToSolve();
-        if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
-        return solution;
-    }
-
-    private int[][] tryToSolve() {
-        int[][] solution = null;
+        int[] solution = null;
         var direction = 1;
 
         fieldLoop:
-        for (int p = 0; p <= 81; p += direction) {
-            if (p == 81) {
+        for (int p = 0; p <= SIDE_LENGTH * SIDE_LENGTH; p += direction) {
+            if (p == SIDE_LENGTH * SIDE_LENGTH) {
                 if (solution != null) throw new IllegalArgumentException("Sudoku has several solutions");
-                solution = new int[9][9];
-                for (var i = 0; i < 9; i++) {
-                    System.arraycopy(grid[i], 0, solution[i], 0, 9);
-                }
+                solution = copyOf(grid, NUMBER_OF_FIELDS);
                 direction = -1;
                 continue;
             }
             if (p < 0) {
-                System.out.println("no solution found (back at the beginning)");
                 break;
             }
 
-            var row = p / 9;
-            var column = p % 9;
+            var row = p / SIDE_LENGTH;
+            var column = p % SIDE_LENGTH;
             var block = (row / 3) * 3 + column / 3;
-            if (guess[row][column]) {
-                var i = grid[row][column] - 1;
+            if (guess[p]) {
+                var i = grid[p] - 1;
                 if (0 <= i) {
                     usedNumbersPerRow[row][i] = false;
                     usedNumbersPerColumn[column][i] = false;
@@ -82,7 +76,7 @@ public class SudokuSolver {
                     if (usedNumbersPerRow[row][i]) continue;
                     if (usedNumbersPerColumn[column][i]) continue;
                     if (usedNumbersPerBlock[block][i]) continue;
-                    grid[row][column] = i + 1;
+                    grid[p] = i + 1;
                     usedNumbersPerRow[row][i] = true;
                     usedNumbersPerColumn[column][i] = true;
                     usedNumbersPerBlock[block][i] = true;
@@ -90,17 +84,28 @@ public class SudokuSolver {
                     continue fieldLoop;
                 }
                 direction = -1;
-                grid[row][column] = 0;
+                grid[p] = 0;
             }
         }
-        return solution;
+        if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
+        return to2D(solution);
+    }
+
+    private int[][] to2D(int[] solution) {
+        var result = new int[SIDE_LENGTH][SIDE_LENGTH];
+        for (var p = 0; p < SIDE_LENGTH * SIDE_LENGTH; p++) {
+            var row = p / SIDE_LENGTH;
+            var column = p % SIDE_LENGTH;
+            result[row][column] = solution[p];
+        }
+        return result;
     }
 
     public String toString() {
         return toString(grid);
     }
 
-    private String toString(int[][] grid) {
-        return "Sudoku-Grid\n" + Arrays.stream(grid).map(Arrays::toString).collect(Collectors.joining("\n"));
+    private String toString(int[] grid) {
+        return "Sudoku-Grid\n" + Arrays.stream(grid).mapToObj(x -> (x % 9 == 0 ? " " : "") + x).collect(Collectors.joining("\n"));
     }
 }
