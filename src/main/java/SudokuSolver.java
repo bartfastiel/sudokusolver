@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -7,7 +8,7 @@ public class SudokuSolver {
     private static final int SIDE_LENGTH = 9;
     private static final int NUMBER_OF_FIELDS = SIDE_LENGTH * SIDE_LENGTH;
     private final int[] grid;
-    private final boolean[] guess = new boolean[NUMBER_OF_FIELDS];
+    private final int[] guessFields;
     private final short[] usedNumbersPerRow = new short[SIDE_LENGTH];
     private final short[] usedNumbersPerColumn = new short[SIDE_LENGTH];
     private final short[] usedNumbersPerBlock = new short[SIDE_LENGTH];
@@ -22,7 +23,8 @@ public class SudokuSolver {
         var numbersGiven = Arrays.stream(grid).flatMapToInt(Arrays::stream).filter(c -> c != 0).count();
         if (numbersGiven < 17)
             throw new IllegalArgumentException("With " + numbersGiven + " numbers (less then 17), there are definitely several solutions");
-        this.grid = new int[SIDE_LENGTH * SIDE_LENGTH];
+        this.grid = new int[NUMBER_OF_FIELDS];
+        var guessFieldsList = new ArrayList<Integer>(NUMBER_OF_FIELDS);
         for (var p = 0; p < SIDE_LENGTH * SIDE_LENGTH; p++) {
             var row = p / SIDE_LENGTH;
             var column = p % SIDE_LENGTH;
@@ -30,7 +32,7 @@ public class SudokuSolver {
             var v = grid[row][column];
             this.grid[p] = v;
             if (v == 0) {
-                guess[p] = true;
+                guessFieldsList.add(p);
             } else {
                 if ((usedNumbersPerRow[row] & (1L << v)) != 0)
                     throw new IllegalArgumentException(v + " twice in row " + row);
@@ -43,6 +45,7 @@ public class SudokuSolver {
                 usedNumbersPerBlock[block] |= 1 << v;
             }
         }
+        guessFields = guessFieldsList.stream().mapToInt(i -> i).toArray();
     }
 
     public int[][] solve() {
@@ -50,42 +53,43 @@ public class SudokuSolver {
         var direction = 1;
 
         fieldLoop:
-        for (int p = 0; p <= NUMBER_OF_FIELDS; p += direction) {
-            if (p == NUMBER_OF_FIELDS) {
+        for (int q = 0; q <= NUMBER_OF_FIELDS; q += direction) {
+            if (q == guessFields.length) {
                 if (solution != null) throw new IllegalArgumentException("Sudoku has several solutions");
                 solution = copyOf(grid, NUMBER_OF_FIELDS);
                 direction = -1;
                 continue;
             }
-            if (p < 0) {
+            if (q < 0) {
                 break;
             }
+
+            var p = guessFields[q];
 
             var row = p / SIDE_LENGTH;
             var column = p % SIDE_LENGTH;
             var block = (row / 3) * 3 + column / 3;
-            if (guess[p]) {
-                var v = grid[p];
-                if (1 <= v) {
-                    var bitMask = ~(1 << v);
-                    usedNumbersPerRow[row] &= bitMask;
-                    usedNumbersPerColumn[column] &= bitMask;
-                    usedNumbersPerBlock[block] &= bitMask;
-                }
-                while (v < 9) {
-                    v++;
-                    var bitMask = 1 << v;
-                    if (((usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]) & bitMask) != 0) continue;
-                    grid[p] = v;
-                    usedNumbersPerRow[row] |= bitMask;
-                    usedNumbersPerColumn[column] |= bitMask;
-                    usedNumbersPerBlock[block] |= bitMask;
-                    direction = 1;
-                    continue fieldLoop;
-                }
-                direction = -1;
-                grid[p] = 0;
+            var v = grid[p];
+            if (1 <= v) {
+                var bitMask = ~(1 << v);
+                usedNumbersPerRow[row] &= bitMask;
+                usedNumbersPerColumn[column] &= bitMask;
+                usedNumbersPerBlock[block] &= bitMask;
             }
+            while (v < 9) {
+                v++;
+                var bitMask = 1 << v;
+                if (((usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]) & bitMask) != 0)
+                    continue;
+                grid[p] = v;
+                usedNumbersPerRow[row] |= bitMask;
+                usedNumbersPerColumn[column] |= bitMask;
+                usedNumbersPerBlock[block] |= bitMask;
+                direction = 1;
+                continue fieldLoop;
+            }
+            direction = -1;
+            grid[p] = 0;
         }
         if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
         return to2D(solution);
