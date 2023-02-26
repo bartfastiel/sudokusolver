@@ -1,16 +1,35 @@
 import org.junit.Test;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Objects;
 
 public class PerformanceTest {
 
     @Test
-    public void test() throws IOException {
-        var allSudokus = getAllSudokus();
+    public void all17ClueSudokus() throws IOException {
+        runAll(PerformanceTest.class.getClassLoader().getResource("all_17_clue_sudokus.txt"));
+    }
+
+    @Test
+    public void randomTests() throws IOException {
+        TestSetTransformer.transform();
+        var randomSets = PerformanceTest.class.getClassLoader().getResource("randomTests");
+        var files = new File(randomSets.getPath()).listFiles();
+        for (File file : files) {
+            var name = file.getName();
+            if (!name.endsWith(".txt"))
+                continue;
+            runAll(file.toURL());
+        }
+    }
+
+    private static void runAll(URL filename) throws IOException {
+        var allSudokus = getAllSudokus(filename);
         var times = new HashSet<Long>();
         System.out.println("time in ms |  average |   min |   max");
         int sampleSize = 100;
@@ -35,9 +54,9 @@ public class PerformanceTest {
         System.out.println("Max time: " + times.stream().mapToLong(Long::longValue).max().orElseThrow());
     }
 
-    private static int[][][] getAllSudokus() throws IOException {
-        var resource = PerformanceTest.class.getClassLoader().getResource("all_17_clue_sudokus.txt");
-        var bufferedReader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(resource).openStream()));
+
+    private static int[][][] getAllSudokus(URL filename) throws IOException {
+        var bufferedReader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(filename).openStream()));
         var numberOfSudokus = Integer.parseInt(bufferedReader.readLine());
         var all17ClueSudokus = new int[numberOfSudokus][9][9];
         for (var i = 0; i < numberOfSudokus; i++) {
