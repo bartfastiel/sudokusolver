@@ -19,6 +19,11 @@ public class PerformanceTest {
     }
 
     @Test
+    public void worst() throws IOException {
+        runAll(PerformanceTest.class.getClassLoader().getResource("worst.txt"));
+    }
+
+    @Test
     public void randomTests() throws IOException {
         TestSetTransformer.transform();
         var randomSets = PerformanceTest.class.getClassLoader().getResource("randomTests");
