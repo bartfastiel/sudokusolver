@@ -34,15 +34,16 @@ public class SudokuSolver {
             if (v == 0) {
                 guessFieldsList.add(p);
             } else {
-                if ((usedNumbersPerRow[row] & (1L << v)) != 0)
+                var bitMask = 1 << v;
+                if ((usedNumbersPerRow[row] & bitMask) != 0)
                     throw new IllegalArgumentException(v + " twice in row " + row);
-                if ((usedNumbersPerColumn[column] & (1L << v)) != 0)
+                if ((usedNumbersPerColumn[column] & bitMask) != 0)
                     throw new IllegalArgumentException(v + " twice in column " + column);
-                if ((usedNumbersPerBlock[block] & (1L << v)) != 0)
+                if ((usedNumbersPerBlock[block] & bitMask) != 0)
                     throw new IllegalArgumentException(v + " twice in block " + block);
-                usedNumbersPerRow[row] |= 1 << v;
-                usedNumbersPerColumn[column] |= 1 << v;
-                usedNumbersPerBlock[block] |= 1 << v;
+                usedNumbersPerRow[row] |= bitMask;
+                usedNumbersPerColumn[column] |= bitMask;
+                usedNumbersPerBlock[block] |= bitMask;
             }
         }
         guessFields = guessFieldsList.stream().mapToInt(i -> i).toArray();
