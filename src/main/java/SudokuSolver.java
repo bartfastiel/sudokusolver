@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 public class SudokuSolver {
 
     private final int[][] grid;
+    private final boolean[][] guess = new boolean[9][9];
     private final boolean[][] usedNumbersPerRow = new boolean[9][9];
     private final boolean[][] usedNumbersPerColumn = new boolean[9][9];
     private final boolean[][] usedNumbersPerBlock = new boolean[9][9];
@@ -24,7 +25,9 @@ public class SudokuSolver {
             var column = p % 9;
             var block = (row / 3) * 3 + column / 3;
             var v = grid[row][column];
-            if (v != 0) {
+            if (v == 0) {
+                guess[row][column] = true;
+            } else {
                 if (usedNumbersPerRow[row][v - 1])
                     throw new IllegalArgumentException(v + " twice in row " + row);
                 if (usedNumbersPerColumn[column][v - 1])
@@ -39,10 +42,10 @@ public class SudokuSolver {
     }
 
     public int[][] solve() {
-        while (insertEasyNumbers()) {
-            // do nothing
-        }
-        var solution = tryToSolveRecursively(0);
+        //       while (insertEasyNumbers()) {
+        // do nothing
+        //     }
+        var solution = tryToSolve();
         if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
         return solution;
     }
@@ -90,41 +93,53 @@ public class SudokuSolver {
         return changesMade;
     }
 
-    private int[][] tryToSolveRecursively(int p) {
-        if (p == 81) {
-            var solution = new int[9][9];
-            for (var i = 0; i < 9; i++) {
-                System.arraycopy(grid[i], 0, solution[i], 0, 9);
-            }
-            return solution;
-        }
-        var row = p / 9;
-        var column = p % 9;
-        var block = (row / 3) * 3 + column / 3;
-        if (grid[row][column] == 0) {
-            int[][] solution = null;
-            for (var guess = 1; guess <= 9; guess++) {
-                if (usedNumbersPerRow[row][guess - 1]) continue;
-                if (usedNumbersPerColumn[column][guess - 1]) continue;
-                if (usedNumbersPerBlock[block][guess - 1]) continue;
-                grid[row][column] = guess;
-                usedNumbersPerRow[row][guess - 1] = true;
-                usedNumbersPerColumn[column][guess - 1] = true;
-                usedNumbersPerBlock[block][guess - 1] = true;
-                var newSolution = tryToSolveRecursively(p + 1);
-                if (newSolution != null) {
-                    if (solution != null)
-                        throw new IllegalArgumentException("Sudoku has several solutions");
-                    solution = newSolution;
+    private int[][] tryToSolve() {
+        int[][] solution = null;
+        var direction = 1;
+
+        fieldLoop:
+        for (int p = 0; p <= 81; p += direction) {
+            if (p == 81) {
+                if (solution != null) throw new IllegalArgumentException("Sudoku has several solutions");
+                solution = new int[9][9];
+                for (var i = 0; i < 9; i++) {
+                    System.arraycopy(grid[i], 0, solution[i], 0, 9);
                 }
-                usedNumbersPerRow[row][guess - 1] = false;
-                usedNumbersPerColumn[column][guess - 1] = false;
-                usedNumbersPerBlock[block][guess - 1] = false;
+                direction = -1;
+                continue;
             }
-            grid[row][column] = 0;
-            return solution;
+            if (p < 0) {
+                System.out.println("no solution found (back at the beginning)");
+                break;
+            }
+
+            var row = p / 9;
+            var column = p % 9;
+            var block = (row / 3) * 3 + column / 3;
+            if (guess[row][column]) {
+                var i = grid[row][column] - 1;
+                if (0 <= i) {
+                    usedNumbersPerRow[row][i] = false;
+                    usedNumbersPerColumn[column][i] = false;
+                    usedNumbersPerBlock[block][i] = false;
+                }
+                while (i < 8) {
+                    i++;
+                    if (usedNumbersPerRow[row][i]) continue;
+                    if (usedNumbersPerColumn[column][i]) continue;
+                    if (usedNumbersPerBlock[block][i]) continue;
+                    grid[row][column] = i + 1;
+                    usedNumbersPerRow[row][i] = true;
+                    usedNumbersPerColumn[column][i] = true;
+                    usedNumbersPerBlock[block][i] = true;
+                    direction = 1;
+                    continue fieldLoop;
+                }
+                direction = -1;
+                grid[row][column] = 0;
+            }
         }
-        return tryToSolveRecursively(p + 1);
+        return solution;
     }
 
     public String toString() {
@@ -133,5 +148,9 @@ public class SudokuSolver {
 
     private String toString(int[][] grid) {
         return "Sudoku-Grid\n" + Arrays.stream(grid).map(Arrays::toString).collect(Collectors.joining("\n"));
+    }
+
+    private String toStringSmall(int[][] grid) {
+        return Arrays.stream(grid).map(r -> Arrays.stream(r).mapToObj(String::valueOf).collect(Collectors.joining(""))).collect(Collectors.joining(" "));
     }
 }
