@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class PerformanceTest {
 
@@ -20,7 +23,9 @@ public class PerformanceTest {
         TestSetTransformer.transform();
         var randomSets = PerformanceTest.class.getClassLoader().getResource("randomTests");
         var files = new File(randomSets.getPath()).listFiles();
+        Arrays.sort(files, Comparator.comparing(File::getName));
         for (File file : files) {
+            System.out.println("Running " + file.getName());
             var name = file.getName();
             if (!name.endsWith(".txt"))
                 continue;
@@ -31,20 +36,25 @@ public class PerformanceTest {
     private static void runAll(URL filename) throws IOException {
         var allSudokus = getAllSudokus(filename);
         var times = new HashSet<Long>();
-        System.out.println("time in ms |  average |   min |   max");
+        System.out.println("                                                                                  time in ms |  average |   min |   max | givens");
         int sampleSize = 100;
         for (int i = 0; i < allSudokus.length && i < sampleSize; i++) {
             var sudoku = allSudokus[i];
+            System.out.print(Arrays.stream(sudoku).map(row -> Arrays.stream(row).mapToObj(String::valueOf).collect(Collectors.joining())).collect(Collectors.joining("")));
             var start = System.currentTimeMillis();
-            var solution = new SudokuSolver(sudoku).solve();
+            try {
+                new SudokuSolver(sudoku).solve();
+            } catch (Exception e) {
+            }
             var end = System.currentTimeMillis();
             var time = end - start;
             times.add(time);
-            System.out.printf("%10d | %8.2f | %5d | %5d%n",
+            System.out.printf(" %10d | %8.2f | %5d | %5d | %5d%n",
                     time,
                     times.stream().mapToLong(Long::longValue).average().orElseThrow(),
                     times.stream().mapToLong(Long::longValue).min().orElseThrow(),
-                    times.stream().mapToLong(Long::longValue).max().orElseThrow()
+                    times.stream().mapToLong(Long::longValue).max().orElseThrow(),
+                    Arrays.stream(sudoku).mapToInt(row -> (int) Arrays.stream(row).filter(value -> value != 0).count()).sum()
             );
         }
         System.out.println();
