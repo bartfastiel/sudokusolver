@@ -1,0 +1,5 @@
+source:
+https://codegolf.stackexchange.com/questions/190727/the-fastest-sudoku-solver
+
+downloaded from:
+https://github.com/maxbergmark/sudoku-solver/blob/master/data-sets/all_17_clue_sudokus.txt
