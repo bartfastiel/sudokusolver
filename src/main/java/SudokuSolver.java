@@ -67,17 +67,19 @@ public class SudokuSolver {
             if (guess[p]) {
                 var v = grid[p];
                 if (1 <= v) {
-                    usedNumbersPerRow[row] &= ~(1 << v);
-                    usedNumbersPerColumn[column] &= ~(1 << v);
-                    usedNumbersPerBlock[block] &= ~(1 << v);
+                    var bitMask = ~(1 << v);
+                    usedNumbersPerRow[row] &= bitMask;
+                    usedNumbersPerColumn[column] &= bitMask;
+                    usedNumbersPerBlock[block] &= bitMask;
                 }
                 while (v < 9) {
                     v++;
-                    if (((usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]) & (1L << v)) != 0) continue;
+                    var bitMask = 1 << v;
+                    if (((usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]) & bitMask) != 0) continue;
                     grid[p] = v;
-                    usedNumbersPerRow[row] |= 1 << v;
-                    usedNumbersPerColumn[column] |= 1 << v;
-                    usedNumbersPerBlock[block] |= 1 << v;
+                    usedNumbersPerRow[row] |= bitMask;
+                    usedNumbersPerColumn[column] |= bitMask;
+                    usedNumbersPerBlock[block] |= bitMask;
                     direction = 1;
                     continue fieldLoop;
                 }
