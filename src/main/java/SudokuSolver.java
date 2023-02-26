@@ -103,8 +103,4 @@ public class SudokuSolver {
     private String toString(int[][] grid) {
         return "Sudoku-Grid\n" + Arrays.stream(grid).map(Arrays::toString).collect(Collectors.joining("\n"));
     }
-
-    private String toStringSmall(int[][] grid) {
-        return Arrays.stream(grid).map(r -> Arrays.stream(r).mapToObj(String::valueOf).collect(Collectors.joining(""))).collect(Collectors.joining(" "));
-    }
 }
