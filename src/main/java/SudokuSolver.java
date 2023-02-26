@@ -43,55 +43,9 @@ public class SudokuSolver {
     }
 
     public int[][] solve() {
-        //       while (insertEasyNumbers()) {
-        // do nothing
-        //     }
         var solution = tryToSolve();
         if (solution == null) throw new IllegalArgumentException("Sudoku is unsolvable");
         return solution;
-    }
-
-    private boolean insertEasyNumbers() {
-        var changesMade = false;
-        for (var p = 0; p < 81; p++) {
-            var row = p / 9;
-            var column = p % 9;
-            var block = (row / 3) * 3 + column / 3;
-            var v = grid[row][column];
-            if (v == 0) {
-                var impossibleNumbers = new boolean[9];
-                for (var i = 0; i < 9; i++) {
-                    var rowValue = grid[row][i];
-                    if (rowValue != 0)
-                        impossibleNumbers[rowValue - 1] = true;
-                    var columnValue = grid[i][column];
-                    if (columnValue != 0)
-                        impossibleNumbers[columnValue - 1] = true;
-                    var blockValue = grid[(row / 3) * 3 + i / 3][(column / 3) * 3 + i % 3];
-                    if (blockValue != 0)
-                        impossibleNumbers[blockValue - 1] = true;
-                }
-                var possibleNumbers = 0;
-                for (var i = 0; i < 9; i++) {
-                    if (!impossibleNumbers[i]) {
-                        possibleNumbers++;
-                    }
-                }
-                if (possibleNumbers == 1) {
-                    for (var i = 0; i < 9; i++) {
-                        if (!impossibleNumbers[i]) {
-                            grid[row][column] = i + 1;
-                            usedNumbersPerRow[row][i] = true;
-                            usedNumbersPerColumn[column][i] = true;
-                            usedNumbersPerBlock[block][i] = true;
-                            changesMade = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        return changesMade;
     }
 
     private int[][] tryToSolve() {
