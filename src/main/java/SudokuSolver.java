@@ -50,8 +50,8 @@ public class SudokuSolver {
         var direction = 1;
 
         fieldLoop:
-        for (int p = 0; p <= SIDE_LENGTH * SIDE_LENGTH; p += direction) {
-            if (p == SIDE_LENGTH * SIDE_LENGTH) {
+        for (int p = 0; p <= NUMBER_OF_FIELDS; p += direction) {
+            if (p == NUMBER_OF_FIELDS) {
                 if (solution != null) throw new IllegalArgumentException("Sudoku has several solutions");
                 solution = copyOf(grid, NUMBER_OF_FIELDS);
                 direction = -1;
