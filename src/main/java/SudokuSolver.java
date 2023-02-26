@@ -3,7 +3,6 @@ import java.util.stream.Collectors;
 
 public class SudokuSolver {
 
-    private static final boolean DEBUG = false;
     private final int[][] grid;
     private final boolean[][] guess = new boolean[9][9];
     private final boolean[][] usedNumbersPerRow = new boolean[9][9];
@@ -54,9 +53,7 @@ public class SudokuSolver {
 
         fieldLoop:
         for (int p = 0; p <= 81; p += direction) {
-            if (DEBUG) System.out.println(toStringSmall(grid));
             if (p == 81) {
-                if (DEBUG) System.out.println("solution found (at the end)");
                 if (solution != null) throw new IllegalArgumentException("Sudoku has several solutions");
                 solution = new int[9][9];
                 for (var i = 0; i < 9; i++) {
@@ -64,11 +61,6 @@ public class SudokuSolver {
                 }
                 direction = -1;
                 continue;
-            }
-            if (DEBUG) {
-                if (p > 0)
-                    System.out.print(String.format("%" + (p + (p / 9)) + "s", ""));
-                System.out.print("^ ");
             }
             if (p < 0) {
                 System.out.println("no solution found (back at the beginning)");
@@ -91,18 +83,14 @@ public class SudokuSolver {
                     if (usedNumbersPerColumn[column][i]) continue;
                     if (usedNumbersPerBlock[block][i]) continue;
                     grid[row][column] = i + 1;
-                    if (DEBUG) System.out.println("guessing " + (i + 1));
                     usedNumbersPerRow[row][i] = true;
                     usedNumbersPerColumn[column][i] = true;
                     usedNumbersPerBlock[block][i] = true;
                     direction = 1;
                     continue fieldLoop;
                 }
-                if (DEBUG) System.out.println("no number found, going back");
                 direction = -1;
                 grid[row][column] = 0;
-            } else {
-                if (DEBUG) System.out.println("no guess");
             }
         }
         return solution;
