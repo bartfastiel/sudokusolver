@@ -73,9 +73,7 @@ public class SudokuSolver {
                 }
                 while (v < 9) {
                     v++;
-                    if ((usedNumbersPerRow[row] & (1L << v)) != 0) continue;
-                    if ((usedNumbersPerColumn[column] & (1L << v)) != 0) continue;
-                    if ((usedNumbersPerBlock[block] & (1L << v)) != 0) continue;
+                    if (((usedNumbersPerRow[row] | usedNumbersPerColumn[column] | usedNumbersPerBlock[block]) & (1L << v)) != 0) continue;
                     grid[p] = v;
                     usedNumbersPerRow[row] |= 1 << v;
                     usedNumbersPerColumn[column] |= 1 << v;
